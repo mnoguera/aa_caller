@@ -64,20 +64,13 @@
       text-transform: uppercase;
     }
 
-    .rows {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
+    ul {
+      padding-left: 1.25rem;
+      margin: 0 0 1rem;
     }
 
-    .badge {
-      border-radius: 999px;
-      padding: 0.2rem 0.9rem;
-      font-size: 0.75rem;
-      background: linear-gradient(120deg, #5af3c1, #33b1ff);
-      color: #041013;
-      margin-right: 0.3rem;
-      display: inline-block;
+    li + li {
+      margin-top: 0.35rem;
     }
 
     code,
@@ -91,15 +84,6 @@
 
     pre {
       overflow-x: auto;
-    }
-
-    ul {
-      padding-left: 1.25rem;
-      margin: 0 0 1rem;
-    }
-
-    li + li {
-      margin-top: 0.35rem;
     }
 
     a {
@@ -130,63 +114,44 @@
   <main>
     <section class="card">
       <p class="hero-meta">codonyat · RNA-temporal variant tracking</p>
-      <h1>RT-aware variant detection built for automation</h1>
+      <h1>codon-yat — codon-aware amino acid variant typing</h1>
       <p>
-        `codonyat` drives the RT variant calling pipeline: it validates the SAM/reference/amplicon inputs, ingests every mapped read into a `SamContainer`, and calculates strand-aware ratios, entropy, and TSV/XML exports that downstream workflows consume without extra parsing.
+        codonyat validates SAM/reference/amplicon triples, loads every mapped read into a `SamContainer`, and emits strand-aware ratios, entropy, and TSV/XML diagnostics that automation pipelines consume without extra parsing.
       </p>
-      <div class="rows">
-        <div>
-          <strong class="badge">Consistent outputs</strong>
-          <p>Generates TSV and XML diagnostics with the same schema the downstream tools expect so you can compare runs reliably.</p>
-        </div>
-        <div>
-          <strong class="badge">Balance metrics</strong>
-          <p>Tracks forward/reverse depth per codon, records variants per amplicon, and flags balanced states via configurable ratio thresholds.</p>
-        </div>
-        <div>
-          <strong class="badge">CLI + API</strong>
-          <p>Run `codonyat` from the shell or import `SamContainer`, `FullReference`, and `parse_amplicons` in Python for tighter automation.</p>
-        </div>
-      </div>
+    </section>
+
+    <section class="card">
+      <h2>Highlights</h2>
+      <ul>
+        <li>Produces the same TSV/XML diagnostics as the legacy Perl outputs while exposing Python objects (`SamContainer`, `FullReference`, etc.) for tooling.</li>
+        <li>Validates every input file before parsing so malformed SAM/FASTA/amplicon data fail fast.</li>
+        <li>Records per-position entropy and strand balance for CI-friendly debugging and auditing.</li>
+      </ul>
     </section>
 
     <section class="card">
       <h2>Installation</h2>
-      <p>Install locally before running the CLI or importing the package:</p>
+      <p>Install the package locally (or publish via PyPI/Twine) before running the CLI or importing it:</p>
       <pre><code>pip install .</code></pre>
-      <p>or publish via PyPI/Twine and install from the registry.</p>
-      <p>The CLI entry point then becomes available as <code>codonyat</code>.</p>
+      <p>The `codonyat` entry point appears on your PATH once installation completes.</p>
     </section>
 
     <section class="card">
       <h2>CLI usage</h2>
       <p>Invoke the tool with a SAM file, a FASTA reference, and an amplicon TSV:</p>
       <pre><code>codonyat sample.sam reference.fasta amplicons.tsv</code></pre>
-      <p>Optionally tune the strand-ratio window and entropy threshold:</p>
+      <p>Tune the strand-ratio window and entropy threshold as needed:</p>
       <pre><code>codonyat sample.sam reference.fasta amplicons.tsv --ratio-upper 3.16 --ratio-lower 0.32 --entropy-threshold 0.5</code></pre>
-      <p>The CLI writes <code>sample.sam.tsv</code> and <code>sample.sam.xml</code> with columns for FILE, REFERENCE, PROTEIN, VARIANT, POSITION, FREQ, FWCOV, RVCOV, TOTALCOV, and RATIO so every downstream consumer sees the same diagnostics each time.</p>
-      <p>The lightweight <code>codonyat-runner</code> entry point reuses the same parsed arguments, exposes the <code>--csv-path</code>/<code>--xml-path</code> overrides, and prints the generated artifact locations so it can slot into smaller pipelines without the full CLI context.</p>
+      <p>The CLI emits <code>sample.sam.tsv</code> and <code>sample.sam.xml</code> with columns for FILE, REFERENCE, PROTEIN, VARIANT, POSITION, FREQ, FWCOV, RVCOV, TOTALCOV, and RATIO so downstream consumers get consistent diagnostics.</p>
+      <p>The lightweight <code>codonyat-runner</code> entry point reuses the parsed arguments, supports <code>--csv-path</code>/<code>--xml-path</code> overrides, and prints the generated artifact locations so it fits into leaner pipelines.</p>
       <pre><code>codonyat-runner sample.sam reference.fasta amplicons.tsv --ratio-upper 3.1 --csv-path results.tsv</code></pre>
     </section>
 
     <section class="card">
-      <h2>Functionality</h2>
-      <p>At its core the tool:</p>
-      <ul>
-        <li>Validates the input files (SAM, FASTA, amplicon TSV) to fail fast on malformed datasets.</li>
-        <li>Loads every mapped read, extracts codons per position, and aggregates counts per strand and amplicon.</li>
-        <li>Computes per-position strand ratios, entropy, and amino-acid summaries, flagging which variants are within the configured balance window.</li>
-        <li>Emits TSV and XML reports with depth, ratio, and per-variant details so you can load the outputs into downstream parsers or visualization tools immediately.</li>
-      </ul>
-      <p>That workflow keeps the diagnostics stable while giving you programmatic objects for deeper orchestration.</p>
-    </section>
-
-    <section class="card">
       <h2>Package API</h2>
-      <p>You can skip the CLI and import the core objects for tighter integration:</p>
+      <p>Import the core objects when you need tighter integration:</p>
       <pre><code>from aa_caller import SamContainer, FullReference, parse_amplicons</code></pre>
-      <p>This lets you run the core logic inside Python jobs, unit tests, or notebooks without shelling out.</p>
-      <p>Call <code>call_variants</code> to validate the inputs, run the translation pipeline, emit the TSV/XML diagnostics, and return a <code>VariantCallResult</code> exposing the artifact paths plus the underlying <code>SamContainer</code>.</p>
+      <p>Use <code>call_variants</code> to validate inputs, run the translation pipeline, emit the TSV/XML artifacts, and return a <code>VariantCallResult</code> with the paths plus the underlying <code>SamContainer</code>:</p>
       <pre><code>from pathlib import Path
 
 from aa_caller import call_variants
@@ -201,7 +166,7 @@ result = call_variants(
 print(result.csv_path, result.xml_path)
 print(result.container.variants.keys())
 </code></pre>
-      <p>If you already have an <code>argparse.Namespace</code> or mapping of CLI arguments, <code>call_variants_from_args</code> adapts them directly so wrappers such as <code>codonyat-runner</code> stay aligned with the same behavior.</p>
+      <p>If you have an <code>argparse.Namespace</code> or mapping of CLI arguments, <code>call_variants_from_args</code> adapts them so wrappers like <code>codonyat-runner</code> stay synchronized:</p>
       <pre><code>from argparse import Namespace
 
 args = Namespace(
@@ -216,21 +181,18 @@ call_variants_from_args(args)
     </section>
 
     <section class="card">
-      <h2>Development &amp; CI parity</h2>
-      <p>Install the project with the dev tooling so local runs match CI:</p>
+      <h2>Development</h2>
+      <p>Install the repo with optional dev tooling to match CI:</p>
       <pre><code>pip install --upgrade pip
 pip install -e .[dev]</code></pre>
-      <p>That gives you <code>pytest</code> and <code>ruff</code>, which the workflow runs on every push/PR:</p>
-      <pre><code>ruff check .
-python -m pytest</code></pre>
-      <p>If you ever need to understand the workflow, see <a href="../.github/workflows/python-tests.yml">the CI definition</a>.</p>
+      <p>The workflow installs <code>pytest</code> and <code>ruff</code> and runs them on every push/PR; see <a href="../.github/workflows/python-tests.yml">the CI definition</a> for details.</p>
     </section>
 
     <section class="card">
       <h2>Testing</h2>
       <ul>
         <li>Validation helpers cover codon translation, input validation, and simple parser paths.</li>
-        <li>The pytest suite lives in <code>tests/test_app.py</code> and aims to keep the legacy behavior locked down.</li>
+        <li>The pytest suite lives in <code>tests/test_app.py</code> and keeps the legacy behavior locked down.</li>
         <li>Run <code>python -m pytest</code> locally, preferably after <code>ruff check .</code>.</li>
       </ul>
     </section>
