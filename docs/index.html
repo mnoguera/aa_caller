@@ -130,25 +130,22 @@
   <main>
     <section class="card">
       <p class="hero-meta">aa-caller · RNA-temporal variant tracking</p>
-      <h1>Modern RT diagnostics that stay faithful to the Perl original</h1>
+      <h1>RT-aware variant detection built for automation</h1>
       <p>
-        `aa-caller` reproduces the `stand_alone_fullkkwr2` workflow while giving
-        you importable Python primitives (`SamContainer`, `FullReference`,
-        `Amplicon`, etc.), extra validation, and exports that downstream tools can
-        consume consistently.
+        `aa-caller` drives the RT variant calling pipeline: it validates the SAM/reference/amplicon inputs, ingests every mapped read into a `SamContainer`, and calculates strand-aware ratios, entropy, and TSV/XML exports that downstream workflows consume without extra parsing.
       </p>
       <div class="rows">
         <div>
-          <strong class="badge">TSV / XML</strong>
-          <p>Identical outputs to the legacy Perl script so your downstream pipeline keeps running.</p>
+          <strong class="badge">Consistent outputs</strong>
+          <p>Generates TSV and XML diagnostics with the same schema the downstream tools expect so you can compare runs reliably.</p>
         </div>
         <div>
-          <strong class="badge">Strand balance</strong>
-          <p>Tracks forward/reverse counts, ratios, and entropy per position for richer diagnostics.</p>
+          <strong class="badge">Balance metrics</strong>
+          <p>Tracks forward/reverse depth per codon, records variants per amplicon, and flags balanced states via configurable ratio thresholds.</p>
         </div>
         <div>
           <strong class="badge">CLI + API</strong>
-          <p>Use the `aa-caller` command-line or import its helpers directly inside automated workflows or notebooks.</p>
+          <p>Run `aa-caller` from the shell or import `SamContainer`, `FullReference`, and `parse_amplicons` in Python for tighter automation.</p>
         </div>
       </div>
     </section>
@@ -167,7 +164,19 @@
       <pre><code>aa-caller sample.sam reference.fasta amplicons.tsv</code></pre>
       <p>Optionally tune the strand-ratio window and entropy threshold:</p>
       <pre><code>aa-caller sample.sam reference.fasta amplicons.tsv --ratio-upper 3.16 --ratio-lower 0.32 --entropy-threshold 0.5</code></pre>
-      <p>The CLI writes <code>sample.sam.tsv</code> and <code>sample.sam.xml</code> with the same columns and structure as the original script.</p>
+      <p>The CLI writes <code>sample.sam.tsv</code> and <code>sample.sam.xml</code> with columns for FILE, REFERENCE, PROTEIN, VARIANT, POSITION, FREQ, FWCOV, RVCOV, TOTALCOV, and RATIO so every downstream consumer sees the same diagnostics each time.</p>
+    </section>
+
+    <section class="card">
+      <h2>Functionality</h2>
+      <p>At its core the tool:</p>
+      <ul>
+        <li>Validates the input files (SAM, FASTA, amplicon TSV) to fail fast on malformed datasets.</li>
+        <li>Loads every mapped read, extracts codons per position, and aggregates counts per strand and amplicon.</li>
+        <li>Computes per-position strand ratios, entropy, and amino-acid summaries, flagging which variants are within the configured balance window.</li>
+        <li>Emits TSV and XML reports with depth, ratio, and per-variant details so you can load the outputs into downstream parsers or visualization tools immediately.</li>
+      </ul>
+      <p>That workflow keeps the diagnostics stable while giving you programmatic objects for deeper orchestration.</p>
     </section>
 
     <section class="card">
