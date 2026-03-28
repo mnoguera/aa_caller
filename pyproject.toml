@@ -30,4 +30,5 @@ dev = [
     "pytest",
     "ruff",
     "twine",
+    "biopython"
 ]
